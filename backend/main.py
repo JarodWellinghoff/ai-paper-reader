@@ -7,7 +7,7 @@ app = FastAPI()
 @app.get("/")
 def root():
     a = "a"
-    b = "b" + a
+    b = "b" + a + "c"
     return {"hello world": b}
 
 

@@ -1,35 +1,124 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useState } from "react";
+import { FileUpload } from "./components/FileUpload";
+import { ProcessingStatusComponent } from "./components/ProcessingStatus";
+import { PDFViewer } from "./components/PDFViewer";
+import { VoiceControls } from "./components/VoiceControls";
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+interface ProcessingStatus {
+  stage: string;
+  progress: number;
 }
 
-export default App
+const App = () => {
+  const [file, setFile] = useState<File | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingStatus, setProcessingStatus] = useState<ProcessingStatus>({
+    stage: "",
+    progress: 0,
+  });
+  const [pdfUrl, setPdfUrl] = useState<string>("");
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [voiceSpeed, setVoiceSpeed] = useState(1);
+  const [currentPosition, setCurrentPosition] = useState(0);
+
+  const handleFileSelect = (selectedFile: File) => {
+    setFile(selectedFile);
+    setPdfUrl("");
+    setCurrentPosition(0);
+  };
+
+  const simulateProcessing = async () => {
+    setIsProcessing(true);
+    const stages = [
+      { stage: "Uploading file...", progress: 20 },
+      { stage: "Processing PDF...", progress: 40 },
+      { stage: "Extracting content for audio...", progress: 60 },
+      { stage: "Generating AI voice...", progress: 80 },
+      { stage: "Finalizing...", progress: 100 },
+    ];
+
+    for (const status of stages) {
+      setProcessingStatus(status);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setPdfUrl(url);
+    }
+
+    setIsProcessing(false);
+  };
+
+  const handlePlayPause = () => {
+    setIsPlaying(!isPlaying);
+  };
+
+  const handleSpeedChange = (speed: number) => {
+    setVoiceSpeed(speed);
+  };
+
+  const handlePositionChange = (position: number) => {
+    setCurrentPosition(position);
+  };
+
+  const resetApp = () => {
+    setFile(null);
+    if (pdfUrl) {
+      URL.revokeObjectURL(pdfUrl);
+    }
+    setPdfUrl("");
+    setIsProcessing(false);
+    setIsPlaying(false);
+    setCurrentPosition(0);
+    setVoiceSpeed(1);
+  };
+
+  return (
+    <div className='min-h-screen bg-gray-50 p-6'>
+      <div className='max-w-6xl mx-auto'>
+        {/* Header */}
+        <div className='text-center mb-8'>
+          <h1 className='text-4xl font-bold text-gray-900 mb-2'>
+            PDF Voice Processor
+          </h1>
+          <p className='text-gray-600'>
+            Upload a PDF and listen to its content with AI voice controls
+          </p>
+        </div>
+
+        {/* File Upload */}
+        {!isProcessing && !pdfUrl && (
+          <FileUpload
+            file={file}
+            onFileSelect={handleFileSelect}
+            onProcess={simulateProcessing}
+            onCancel={resetApp}
+          />
+        )}
+
+        {/* Processing Status */}
+        {isProcessing && (
+          <ProcessingStatusComponent status={processingStatus} />
+        )}
+
+        {/* PDF Display and Controls */}
+        {pdfUrl && (
+          <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
+            <PDFViewer pdfUrl={pdfUrl} onReset={resetApp} />
+            <VoiceControls
+              isPlaying={isPlaying}
+              voiceSpeed={voiceSpeed}
+              currentPosition={currentPosition}
+              onPlayPause={handlePlayPause}
+              onSpeedChange={handleSpeedChange}
+              onPositionChange={handlePositionChange}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default App;
