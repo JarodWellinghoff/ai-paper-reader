@@ -1,0 +1,11 @@
+fastapi[standard] 
+uvicorn[standard]
+python-multipart
+pdfplumber
+transformers
+TTS
+soundfile
+numpy
+librosa
+pydantic
+python-dotenv
